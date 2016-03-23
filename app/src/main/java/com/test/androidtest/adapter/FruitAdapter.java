@@ -49,6 +49,10 @@ public class FruitAdapter extends RecyclerView.Adapter<FruitAdapter.Holder> {
         notifyDataSetChanged();
     }
 
+    public void setFruitList(ArrayList<Fruit> fruits) {
+        mFruitList = fruits;
+    }
+
     @Override
     public int getItemCount() {
         return mFruitList.size();

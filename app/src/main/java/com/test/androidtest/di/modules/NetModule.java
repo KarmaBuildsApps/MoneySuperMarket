@@ -35,7 +35,7 @@ public class NetModule {
     @Provides
     Retrofit provideRetrofit() {
         return new Retrofit.Builder()
-                .baseUrl(Constant.FOOD_BASE_URL)
+                .baseUrl(Constant.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .build();

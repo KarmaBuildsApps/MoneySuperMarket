@@ -1,20 +1,19 @@
 package com.test.androidtest.Service;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.test.androidtest.adapter.FruitAdapter;
 import com.test.androidtest.api.FruitService;
-import com.test.androidtest.api.IFood;
-import com.test.androidtest.api.IMovies;
 import com.test.androidtest.model.Fruit;
+import com.test.androidtest.model.FruitItem;
 import com.test.androidtest.model.Fruits;
-import com.test.androidtest.model.foodModelTest.Food;
-import com.test.androidtest.model.testmodel.Movies;
+
+import java.util.ArrayList;
 
 import javax.inject.Inject;
 
 import io.realm.Realm;
+import io.realm.RealmResults;
 import rx.Observable;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
@@ -28,10 +27,6 @@ public class DataService {
     Realm mRealm;
     @Inject
     FruitService mFruitService;
-    @Inject
-    IFood iFood;
-    @Inject
-    IMovies iMovies;
     private FruitAdapter mFruitAdapter;
     public static final String TAG = DataService.class.getSimpleName();
 
@@ -63,57 +58,39 @@ public class DataService {
                         Log.d(TAG, "onNext " + fruits.getFruits());
 
                         for (Fruit fruit : fruits.getFruits()) {
-                            mFruitAdapter.addFruit(fruit);
+                            addInRealmAndUpdateAdapter(fruit);
                         }
                     }
                 });
     }
 
-    public void getMovies() {
-        Observable<Movies> observable = iMovies.getMovies();
-
-
-        observable
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Movies>() {
-                    @Override
-                    public void onCompleted() {
-                        Log.d(TAG, "onCompleted");
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.d(TAG, "onError " + e.getMessage());
-                    }
-
-                    @Override
-                    public void onNext(Movies movies) {
-                        Log.d(TAG, "onNext " + movies.getTitle());
-                    }
-                });
+    private void addInRealmAndUpdateAdapter(Fruit fruit) {
+        String id = fruit.getId();
+        if (mRealm.where(FruitItem.class).equalTo("id", id).count() != 0) {
+            mFruitAdapter.addFruit(fruit);
+            FruitItem fruitItem = new FruitItem();
+            fruitItem.setId(fruit.getId());
+            fruitItem.setName(fruit.getName());
+            fruitItem.setPrice(fruit.getPrice());
+            mRealm.beginTransaction();
+            mRealm.copyToRealmOrUpdate(fruitItem);
+            mRealm.commitTransaction();
+        }
     }
 
-    public void getFood() {
-        Observable<Food> observable = iFood.getFood();
-        observable
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Food>() {
-                    @Override
-                    public void onCompleted() {
-                        Log.d(TAG, "onCompleted");
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.d(TAG, "onError " + e.getMessage());
-                    }
-
-                    @Override
-                    public void onNext(Food food) {
-                        Log.d(TAG, "onNext " + food.getHits().size());
-                    }
-                });
+    public ArrayList<Fruit> getFruitsInRealm() {
+        ArrayList<Fruit> fruits = new ArrayList<>();
+        RealmResults<FruitItem> realmResults = mRealm.where(FruitItem.class).findAll();
+        for (int i = 0; i < realmResults.size(); i++) {
+            Fruit fruit = new Fruit();
+            FruitItem fruitItem = realmResults.get(i);
+            fruit.setId(fruitItem.getId());
+            fruit.setName(fruitItem.getName());
+            fruit.setPrice(fruitItem.getPrice());
+            fruits.add(fruit);
+        }
+        return fruits;
     }
+
+
 }
